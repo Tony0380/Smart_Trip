@@ -103,8 +103,8 @@ class TravelDatasetGenerator:
             is_peak_hour = hour in [8, 9, 17, 18, 19]
 
             # 3. USER FEATURES
-            user_profile = random.choice(['business', 'leisure', 'budget'])
-            user_age = random.randint(18, 70)
+            user_profile = self._generate_realistic_user_profile(season, is_weekend)
+            user_age = self._generate_realistic_age(user_profile)
             user_income = self._generate_income_by_profile(user_profile)
 
             # 4. TRANSPORT FEATURES
@@ -158,9 +158,9 @@ class TravelDatasetGenerator:
                 'user_profile': user_profile,
                 'user_age': user_age,
                 'user_income': user_income,
-                'price_sensitivity': self.user_profiles[user_profile]['price_sensitivity'],
-                'time_priority': self.user_profiles[user_profile]['time_priority'],
-                'comfort_priority': self.user_profiles[user_profile]['comfort_priority'],
+                'price_sensitivity': self._generate_realistic_preference(user_profile, 'price_sensitivity'),
+                'time_priority': self._generate_realistic_preference(user_profile, 'time_priority'),
+                'comfort_priority': self._generate_realistic_preference(user_profile, 'comfort_priority'),
 
                 # Transport
                 'transport_type': chosen_transport,
@@ -214,30 +214,83 @@ class TravelDatasetGenerator:
         """Simula scelta trasporto basata su profilo utente e distanza"""
         preferences = self.user_profiles[user_profile]['preferred_transports']
 
-        # Filtra trasporti disponibili che piacciono all'utente
-        preferred_available = [t for t in preferences if t in available_transports]
+        # Probabilità di scelta basata su profilo
+        transport_weights = {}
+        for transport in available_transports:
+            base_weight = 0.6 if transport in preferences else 0.3
+            
+            # Aggiusta pesi per distanza con variabilità
+            distance_factor = random.uniform(0.8, 1.2)
+            if distance > 700 and transport == 'flight':
+                base_weight *= (1.5 * distance_factor)
+            elif 150 < distance < 900 and transport == 'train':
+                base_weight *= (1.3 * distance_factor)
+            elif distance < 400 and transport == 'bus':
+                base_weight *= (1.2 * distance_factor)
+            
+            transport_weights[transport] = base_weight
 
-        if preferred_available:
-            # Logica distanza: voli per >800km, treni per 100-800km, bus per <300km
-            if distance > 800 and 'flight' in preferred_available:
-                return 'flight'
-            elif distance > 100 and 'train' in preferred_available:
-                return 'train'
-            else:
-                return random.choice(preferred_available)
-        else:
-            # Fallback su disponibili
+        # Scelta probabilistica invece che deterministica
+        total_weight = sum(transport_weights.values())
+        if total_weight == 0:
             return random.choice(available_transports) if available_transports else 'bus'
+        
+        rand_val = random.uniform(0, total_weight)
+        cumulative = 0
+        for transport, weight in transport_weights.items():
+            cumulative += weight
+            if rand_val <= cumulative:
+                return transport
+        
+        return random.choice(available_transports) if available_transports else 'bus'
 
     def _generate_income_by_profile(self, profile: str) -> float:
-        """Genera reddito realistico per profilo"""
+        """Genera reddito realistico con sovrapposizioni"""
         income_ranges = {
-            'business': (40000, 80000),
-            'leisure': (25000, 50000),
-            'budget': (15000, 30000)
+            'business': (25000, 95000),
+            'leisure': (18000, 75000),
+            'budget': (10000, 55000)
         }
         low, high = income_ranges[profile]
-        return random.uniform(low, high)
+        base_income = random.uniform(low, high)
+        noise = random.gauss(0, 12000)
+        return max(10000, base_income + noise)
+
+    def _generate_realistic_preference(self, user_profile: str, preference_type: str) -> float:
+        """Genera preferenze realistiche con variabilità"""
+        base_values = self.user_profiles[user_profile][preference_type]
+        noise = random.gauss(0, 0.15)
+        realistic_value = base_values + noise
+        return max(0.1, min(0.95, realistic_value))
+
+    def _generate_realistic_user_profile(self, season: str, is_weekend: bool) -> str:
+        """Genera profilo utente con distribuzione realistica"""
+        profile_weights = {'business': 0.3, 'leisure': 0.5, 'budget': 0.2}
+        
+        # Aggiusta pesi per stagione e weekend
+        if season == 'summer':
+            profile_weights['leisure'] *= 1.4
+            profile_weights['business'] *= 0.7
+        elif is_weekend:
+            profile_weights['leisure'] *= 1.2
+            profile_weights['business'] *= 0.8
+        
+        # Scelta pesata
+        profiles = list(profile_weights.keys())
+        weights = list(profile_weights.values())
+        return random.choices(profiles, weights=weights)[0]
+
+    def _generate_realistic_age(self, user_profile: str) -> int:
+        """Genera età realistica per profilo"""
+        age_ranges = {
+            'business': (25, 55),
+            'leisure': (20, 65),
+            'budget': (18, 35)
+        }
+        low, high = age_ranges[user_profile]
+        base_age = random.uniform(low, high)
+        noise = random.gauss(0, 5)
+        return max(18, min(70, int(base_age + noise)))
 
     def _calculate_base_demand(self, origin: str, destination: str,
                              season: str, is_weekend: bool, hour: int) -> float:

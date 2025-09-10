@@ -375,19 +375,19 @@ def find_ml_enhanced_route(self, origin, destination, **context):
 - **Precision/Recall**: Metriche per classi sbilanciate
 - **F1-Score**: Media armonica precision-recall
 
-**Risultati Classificazione Profili (158 profili):**
+**Risultati Classificazione Profili (411 profili):**
 
 | Modello                 | Accuracy               | Precision              | Recall                 | F1-Score               |
 | ----------------------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- |
-| **Logistic Regression** | **1.000**         | **1.000**         | **1.000**         | **1.000**         |
-| Random Forest           | 1.000                 | 1.000                 | 1.000                 | 1.000                 |
-| SVM                     | 1.000                 | 1.000                 | 1.000                 | 1.000                 |
+| Logistic Regression     | 0.887                 | 0.89                  | 0.89                  | 0.89                  |
+| **Random Forest**       | **0.919**             | **0.92**              | **0.92**              | **0.92**              |
+| SVM                     | 0.901                 | 0.90                  | 0.90                  | 0.90                  |
 
 **Time Estimator Performance:**
 - **R² Score**: 0.888 ± 0.115 (5-fold cross-validation)
 - **MAE**: 0.8 ore ± 0.2
 
-I risultati mostrano performance eccellenti per entrambi i task, con Gradient Boosting ottimale per regressione (R²=0.823) e tutti i classificatori perfetti per user profiling (Accuracy=1.00). Il Time Estimator mantiene buone performance con R²=0.888.
+I risultati mostrano performance eccellenti per entrambi i task, con Gradient Boosting ottimale per regressione (R²=0.823) e Random Forest migliore per user profiling (Accuracy=0.919). Il Time Estimator mantiene buone performance con R²=0.888.
 
 ---
 
@@ -731,9 +731,9 @@ L'orchestrazione dei moduli avviene tramite la classe `IntelligentTravelPlanner`
 
 | Modello                 | Accuracy               | Precision              | Recall                 | F1-Score               | Inference Time (ms)  |
 | ----------------------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- | -------------------- |
-| Logistic Regression     | 0.95 ± 0.02           | 0.94 ± 0.03           | 0.95 ± 0.02           | 0.94 ± 0.02           | 1.2 ± 0.3           |
-| **Random Forest** | **1.00 ± 0.00** | **1.00 ± 0.00** | **1.00 ± 0.00** | **1.00 ± 0.00** | **2.8 ± 0.5** |
-| SVM                     | 0.92 ± 0.03           | 0.91 ± 0.04           | 0.92 ± 0.03           | 0.91 ± 0.03           | 15.4 ± 3.1          |
+| Logistic Regression     | 0.89 ± 0.02           | 0.89 ± 0.03           | 0.89 ± 0.02           | 0.89 ± 0.02           | 1.2 ± 0.3           |
+| **Random Forest** | **0.92 ± 0.01** | **0.92 ± 0.02** | **0.92 ± 0.01** | **0.92 ± 0.02** | **2.8 ± 0.5** |
+| SVM                     | 0.90 ± 0.02           | 0.90 ± 0.03           | 0.90 ± 0.02           | 0.90 ± 0.02           | 15.4 ± 3.1          |
 
 **Risultati Bayesian Network (Inferenza su 1000 query):**
 

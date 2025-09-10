@@ -86,7 +86,7 @@ Esegue benchmark completo con K-fold cross-validation e salva risultati dettagli
 
 ### Performance Ottenute
 - **Price Predictor**: R² = 0.823 (Gradient Boosting)
-- **User Classifier**: Accuracy = 100% (Logistic Regression)  
+- **User Classifier**: Accuracy = 91.9% (Random Forest), 88.7% (Logistic Regression)  
 - **Time Estimator**: R² = 0.888 ± 0.115
 - **System Response**: < 1 secondo per pianificazione singola
 
@@ -134,4 +134,4 @@ Il sistema fornisce:
 - **Validazione vincoli** tramite KB Prolog avanzata con inferenza multi-livello
 - **Analisi incertezza** Bayesiana (Train: Success=89%, Bus: Success=90%, Flight: Success=83%)
 - **Spiegazioni interpretabili** del processo decisionale con meta-ragionamento
-- **Performance metriche**: Price Predictor R²=0.823, User Classifier Accuracy=100%, Time Estimator R²=0.888
+- **Performance metriche**: Price Predictor R²=0.823, User Classifier Accuracy=91.9%, Time Estimator R²=0.888
