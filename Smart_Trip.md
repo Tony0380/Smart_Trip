@@ -87,8 +87,8 @@ Modelli di apprendimento supervisionato con Grid Search per predizione di variab
 **Argomento 3: Ragionamento Probabilistico** (Sezione "Ragionamento Probabilistico e Incertezza" del programma)
 Rete Bayesiana per modellazione dell'incertezza nelle decisioni di viaggio, gestendo dipendenze probabilistiche tra variabili ambientali e outcome di viaggio.
 
-**Argomento 4: Rappresentazione della Conoscenza** (Sezione "Rappresentazione della Conoscenza e Ragionamento Automatico" del programma)
-Knowledge Base Prolog per codifica di vincoli logici, regole di business e constraint satisfaction nella validazione di piani di viaggio.
+**Argomento 4: Rappresentazione della Conoscenza** (Sezione "Rappresentazione della Conoscenza e Ragionamento Automatico" del programma)  
+Knowledge Base Prolog avanzata con inferenza complessa multi-livello: pathfinding dinamico ricorsivo, calcolo affidabilità con fattori meteorologici e eventi, meta-ragionamento per spiegazioni, constraint satisfaction con propagazione, ottimizzazione multi-obiettivo e pianificazione temporale.
 
 ---
 
@@ -360,14 +360,14 @@ def find_ml_enhanced_route(self, origin, destination, **context):
 - **Mean Absolute Error (MAE)**: Errore assoluto medio in unità originali
 - **Root Mean Squared Error (RMSE)**: Penalizzazione errori quadratici
 
-**Risultati Predizione Prezzi:**
+**Risultati Predizione Prezzi (Dataset 158 scenari):**
 
 | Modello                     | R² Score                | MAE (€)             | RMSE (€)             |
 | --------------------------- | ------------------------ | -------------------- | --------------------- |
-| Linear Regression           | 0.889 ± 0.012           | 8.5 ± 0.8           | 12.1 ± 1.2           |
-| Ridge Regression            | 0.859 ± 0.015           | 9.5 ± 0.9           | 13.4 ± 1.1           |
-| Random Forest               | 0.750 ± 0.023           | 11.3 ± 1.2          | 16.8 ± 1.8           |
-| **Gradient Boosting** | **0.908 ± 0.010** | **6.8 ± 0.6** | **10.3 ± 0.9** |
+| Linear Regression           | 0.697                   | 12.85               | 16.2                 |
+| Ridge Regression            | 0.721                   | 12.20               | 15.8                 |
+| Random Forest               | 0.688                   | 12.43               | 16.7                 |
+| **Gradient Boosting** | **0.823**          | **10.24**      | **13.1**        |
 
 **Metriche per Classificazione:**
 
@@ -375,15 +375,19 @@ def find_ml_enhanced_route(self, origin, destination, **context):
 - **Precision/Recall**: Metriche per classi sbilanciate
 - **F1-Score**: Media armonica precision-recall
 
-**Risultati Classificazione Profili:**
+**Risultati Classificazione Profili (158 profili):**
 
 | Modello                 | Accuracy               | Precision              | Recall                 | F1-Score               |
 | ----------------------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- |
-| Logistic Regression     | 0.95 ± 0.02           | 0.94 ± 0.03           | 0.95 ± 0.02           | 0.94 ± 0.02           |
-| **Random Forest** | **1.00 ± 0.00** | **1.00 ± 0.00** | **1.00 ± 0.00** | **1.00 ± 0.00** |
-| SVM                     | 0.92 ± 0.03           | 0.91 ± 0.04           | 0.92 ± 0.03           | 0.91 ± 0.03           |
+| **Logistic Regression** | **1.000**         | **1.000**         | **1.000**         | **1.000**         |
+| Random Forest           | 1.000                 | 1.000                 | 1.000                 | 1.000                 |
+| SVM                     | 1.000                 | 1.000                 | 1.000                 | 1.000                 |
 
-I risultati mostrano performance eccellenti per entrambi i task, con Gradient Boosting ottimale per regressione (R²=0.908) e Random Forest perfetto per classificazione (Accuracy=1.00).
+**Time Estimator Performance:**
+- **R² Score**: 0.888 ± 0.115 (5-fold cross-validation)
+- **MAE**: 0.8 ore ± 0.2
+
+I risultati mostrano performance eccellenti per entrambi i task, con Gradient Boosting ottimale per regressione (R²=0.823) e tutti i classificatori perfetti per user profiling (Accuracy=1.00). Il Time Estimator mantiene buone performance con R²=0.888.
 
 ---
 
@@ -515,16 +519,16 @@ I risultati mostrano comportamento intuitivo della rete: cattive condizioni mete
 
 ### Sommario
 
-Il modulo logico implementa una **Knowledge Base Prolog** per rappresentazione dichiarativa di vincoli, regole di business e logica di constraint satisfaction nel dominio viaggi. La rappresentazione della conoscenza utilizza **clausole di Horn** per codifica di relazioni logiche, enabling un sistema di rules-based reasoning per validazione e verifica di consistenza dei piani di viaggio.
+Il modulo logico implementa una **Knowledge Base Prolog avanzata** con inferenza complessa multi-livello per rappresentazione dichiarativa di vincoli, regole di business e constraint satisfaction nel dominio viaggi. Il sistema implementa reasoning automatico complesso includendo pathfinding ricorsivo dinamico, calcolo affidabilità con fattori ambientali, meta-ragionamento con spiegazioni, e ottimizzazione multi-obiettivo.
 
 **Architettura della Knowledge Base:**
 
 La KB Prolog è organizzata gerarchicamente in livelli di astrazione crescente:
 
-1. **Livello dei Fatti Base** (245 fatti): Rappresentazione atomica di città, connessioni, caratteristiche trasporti e profili utente utilizzando predicati ground
-2. **Livello delle Regole Definite** (150 regole): Implicazioni logiche per derivazione di nuova conoscenza tramite backward chaining
-3. **Livello dei Constraint** (23 regole constraint): Vincoli di compatibilità, feasibility checking e validation rules
-4. **Livello dell'Interface** (12 predicati query): API di alto livello per interrogazione sistematica della KB
+1. **Livello dei Fatti Base** (350+ fatti): Città con coordinate GPS reali, connessioni multi-modali, trasporti con disponibilità oraria, eventi probabilistici, impatti meteorologici regionali
+2. **Livello di Inferenza Dinamica** (200+ regole): Pathfinding ricorsivo fino a 5 salti, calcolo affidabilità multi-fattoriale, reasoning temporale con scheduling
+3. **Livello Meta-Cognitivo** (50+ regole): Spiegazioni automatiche delle decisioni, constraint propagation avanzata, ottimizzazione multi-obiettivo con ranking dinamico
+4. **Livello Interface Avanzato** (30+ predicati): API complessa per interrogazioni con inferenza completa, meta-ragionamento e pianificazione temporale
 
 La knowledge base implementa il **Closed World Assumption**, dove tutto ciò che non è esplicitamente derivabile è considerato falso, appropriato per il dominio strutturato dei trasporti.
 

@@ -409,3 +409,16 @@ if __name__ == "__main__":
               f"Score: {route.normalized_score:.3f}")
 
     print(f"\n[DONE] Test algoritmi completato!")
+
+    def find_optimal_route(self, origin: str, destination: str, budget: float = 1000.0) -> Optional[TravelRoute]:
+        """Find optimal route using A* algorithm"""
+        try:
+            return self.multi_objective_astar(origin, destination, objective=OptimizationObjective.COST)
+        except Exception:
+            routes = self.beam_search_routes(origin, destination)
+            valid_routes = [r for r in routes if r.total_cost <= budget]
+            return valid_routes[0] if valid_routes else None
+
+    def find_route(self, origin: str, destination: str) -> Optional[TravelRoute]:
+        """Simple route finding method"""
+        return self.find_optimal_route(origin, destination)

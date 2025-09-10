@@ -55,10 +55,27 @@ connection(roma, cagliari, [flight], 470).
 connection(milano, bari, [flight], 770).
 connection(roma, bari, [flight], 450).
 
-% Caratteristiche trasporti
-transport(train, 120, 0.15, high, medium).
-transport(bus, 80, 0.08, low, low).
-transport(flight, 500, 0.25, high, high).
+% Caratteristiche trasporti con disponibilità temporale
+transport(train, 120, 0.15, high, medium, [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]).
+transport(bus, 80, 0.08, low, low, [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]).
+transport(flight, 500, 0.25, high, high, [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]).
+
+% Condizioni meteorologiche per città
+weather_impact(north, winter, [train:0.8, bus:0.6, flight:0.9]).
+weather_impact(north, summer, [train:1.0, bus:1.0, flight:1.0]).
+weather_impact(south, winter, [train:0.9, bus:0.8, flight:0.95]).
+weather_impact(south, summer, [train:0.95, bus:0.9, flight:1.0]).
+weather_impact(center, _, [train:0.95, bus:0.9, flight:0.98]).
+
+% Capacità dei trasporti
+capacity(train, 300, high_frequency).
+capacity(bus, 50, medium_frequency).
+capacity(flight, 180, low_frequency).
+
+% Eventi che influenzano disponibilità
+event(strike, train, [probability:0.05, impact:0.0]).
+event(delay, flight, [probability:0.15, impact:0.8]).
+event(roadwork, bus, [probability:0.1, impact:0.7]).
 
 % PROFILI UTENTE
 
@@ -77,7 +94,7 @@ prefers(budget, bus).
 prefers(family, train).
 prefers(student, bus).
 
-% REGOLE PRINCIPALI
+% REGOLE PRINCIPALI CON INFERENZA COMPLESSA
 
 % Collegamento bidirezionale
 connected(A, B, Transports, Distance) :-
@@ -85,24 +102,110 @@ connected(A, B, Transports, Distance) :-
 connected(A, B, Transports, Distance) :-
     connection(B, A, Transports, Distance).
 
-% Percorso diretto
-path(Origin, Dest, [Origin, Dest], Transport, Cost) :-
-    connected(Origin, Dest, Transports, Distance),
-    member(Transport, Transports),
-    transport(Transport, _, CostKm, _, _),
-    Cost is Distance * CostKm.
+% Percorso multi-hop con ricerca dinamica
+path(Origin, Dest, Path, Transport, TotalCost) :-
+    path(Origin, Dest, [Origin], Path, Transport, TotalCost, 0, 5).
 
-% Percorso con un intermedio
-path(Origin, Dest, [Origin, Mid, Dest], Transport, TotalCost) :-
-    connected(Origin, Mid, T1, D1),
-    connected(Mid, Dest, T2, D2),
-    member(Transport, T1),
-    member(Transport, T2),
-    Origin \= Dest,
-    Mid \= Origin,
-    Mid \= Dest,
-    transport(Transport, _, CostKm, _, _),
-    TotalCost is (D1 + D2) * CostKm.
+path(Dest, Dest, Acc, Path, _, 0, _, _) :-
+    reverse(Acc, Path).
+
+path(Current, Dest, Acc, Path, Transport, TotalCost, CostSoFar, MaxHops) :-
+    MaxHops > 0,
+    connected(Current, Next, Transports, Distance),
+    member(Transport, Transports),
+    \+ member(Next, Acc),
+    transport(Transport, _, CostKm, _, _, _),
+    SegmentCost is Distance * CostKm,
+    NewCost is CostSoFar + SegmentCost,
+    NewHops is MaxHops - 1,
+    path(Next, Dest, [Next|Acc], Path, Transport, TotalCost, NewCost, NewHops),
+    TotalCost = NewCost.
+
+% Inferenza su disponibilità dinamica
+available_at_time(Transport, Hour) :-
+    transport(Transport, _, _, _, _, AvailableHours),
+    member(Hour, AvailableHours).
+
+% Calcolo affidabilità considerando eventi
+transport_reliability(Transport, Region, Season, Reliability) :-
+    findall(Impact, (event(_, Transport, Props), member(impact:Impact, Props)), Impacts),
+    findall(Prob, (event(_, Transport, Props), member(probability:Prob, Props)), Probs),
+    calculate_reliability(Impacts, Probs, BaseReliability),
+    weather_impact(Region, Season, WeatherEffects),
+    member(Transport:WeatherFactor, WeatherEffects),
+    Reliability is BaseReliability * WeatherFactor.
+
+calculate_reliability([], [], 1.0).
+calculate_reliability([Impact|Impacts], [Prob|Probs], Reliability) :-
+    calculate_reliability(Impacts, Probs, SubReliability),
+    Reliability is SubReliability * (1 - Prob * (1 - Impact)).
+
+% Ottimizzazione multi-obiettivo con inferenza
+optimal_route(Origin, Dest, Profile, Criteria, OptimalRoute) :-
+    findall(route(Path, Transport, Cost, Time, Comfort, Reliability),
+            (path(Origin, Dest, Path, Transport, Cost),
+             calculate_route_metrics(Path, Transport, Profile, Time, Comfort, Reliability)),
+            Routes),
+    rank_routes(Routes, Criteria, [OptimalRoute|_]).
+
+calculate_route_metrics(Path, Transport, Profile, Time, Comfort, Reliability) :-
+    path_length(Path, Length),
+    transport(Transport, Speed, _, ComfortLevel, _, _),
+    Time is Length / Speed * 60,
+    map_comfort(ComfortLevel, Comfort),
+    city(Origin, Region, _, _),
+    current_season(Season),
+    transport_reliability(Transport, Region, Season, Reliability).
+
+map_comfort(high, 0.9).
+map_comfort(medium, 0.6).
+map_comfort(low, 0.3).
+
+path_length([_], 0).
+path_length([A,B|Rest], TotalLength) :-
+    connected(A, B, _, Distance),
+    path_length([B|Rest], RestLength),
+    TotalLength is Distance + RestLength.
+
+% Constraint satisfaction con propagazione
+satisfies_all_constraints(Route, Constraints) :-
+    forall(member(Constraint, Constraints),
+           satisfies_constraint(Route, Constraint)).
+
+satisfies_constraint(route(_, _, Cost, _, _, _), budget(Budget)) :-
+    Cost =< Budget.
+satisfies_constraint(route(_, _, _, Time, _, _), max_time(MaxTime)) :-
+    Time =< MaxTime.
+satisfies_constraint(route(_, _, _, _, Comfort, _), min_comfort(MinComfort)) :-
+    Comfort >= MinComfort.
+satisfies_constraint(route(_, _, _, _, _, Reliability), min_reliability(MinReliability)) :-
+    Reliability >= MinReliability.
+
+% Meta-ragionamento: spiegazione delle decisioni
+explain_route_choice(route(Path, Transport, Cost, Time, Comfort, Reliability), Profile, Explanation) :-
+    findall(Reason, generate_reason(Path, Transport, Cost, Time, Comfort, Reliability, Profile, Reason), Explanation).
+
+generate_reason(_, Transport, _, _, _, _, business, 'Selected for speed priority') :-
+    transport(Transport, Speed, _, _, _, _), Speed > 400.
+generate_reason(_, Transport, Cost, _, _, _, budget, 'Selected for cost efficiency') :-
+    transport(Transport, _, CostKm, _, _, _), CostKm < 0.1.
+generate_reason(Path, _, _, _, _, Reliability, _, 'Reliable route chosen') :-
+    Reliability > 0.8, length(Path, Len), Len =< 3.
+
+% Pianificazione temporale con vincoli
+schedule_trip(Origin, Dest, Profile, DepartureTime, ArrivalTime, Schedule) :-
+    path(Origin, Dest, Path, Transport, _),
+    available_at_time(Transport, DepartureTime),
+    calculate_travel_time(Path, Transport, TravelTime),
+    ArrivalTime is DepartureTime + TravelTime,
+    Schedule = schedule(departure:DepartureTime, arrival:ArrivalTime, transport:Transport, path:Path).
+
+calculate_travel_time(Path, Transport, TotalTime) :-
+    path_length(Path, Distance),
+    transport(Transport, Speed, _, _, _, _),
+    TotalTime is Distance / Speed * 60.
+
+current_season(summer).
 
 % Trasporto disponibile
 available(Origin, Dest, Transport) :-
@@ -156,15 +259,30 @@ rank_by_profile(Transports, budget, Ranked) :-
     sort_by_cost(Transports, Ranked).
 rank_by_profile(Transports, _, [train, bus, flight]).
 
-% Ordinamenti semplificati
-sort_by_speed([flight, train, bus], [flight, train, bus]).
-sort_by_speed([train, bus], [train, bus]).
-sort_by_speed([flight], [flight]).
-sort_by_speed([bus], [bus]).
+% Ranking dinamico basato su metriche calcolate
+rank_routes(Routes, Criteria, RankedRoutes) :-
+    maplist(score_route(Criteria), Routes, ScoredRoutes),
+    keysort(ScoredRoutes, Sorted),
+    reverse(Sorted, ReverseSorted),
+    pairs_values(ReverseSorted, RankedRoutes).
 
-sort_by_cost([bus, train, flight], [bus, train, flight]).
-sort_by_cost([train, flight], [train, flight]).
-sort_by_cost([bus], [bus]).
+score_route(Criteria, Route, Score-Route) :-
+    Route = route(_, _, Cost, Time, Comfort, Reliability),
+    normalize_metrics(Cost, Time, Comfort, Reliability, NCost, NTime, NComfort, NReliability),
+    calculate_weighted_score(Criteria, NCost, NTime, NComfort, NReliability, Score).
+
+normalize_metrics(Cost, Time, Comfort, Reliability, NCost, NTime, NComfort, NReliability) :-
+    NCost is 1 / (1 + Cost / 100),
+    NTime is 1 / (1 + Time / 60),
+    NComfort is Comfort,
+    NReliability is Reliability.
+
+calculate_weighted_score(business, NCost, NTime, NComfort, NReliability, Score) :-
+    Score is 0.1 * NCost + 0.4 * NTime + 0.25 * NComfort + 0.25 * NReliability.
+calculate_weighted_score(budget, NCost, NTime, NComfort, NReliability, Score) :-
+    Score is 0.5 * NCost + 0.2 * NTime + 0.1 * NComfort + 0.2 * NReliability.
+calculate_weighted_score(leisure, NCost, NTime, NComfort, NReliability, Score) :-
+    Score is 0.25 * NCost + 0.2 * NTime + 0.35 * NComfort + 0.2 * NReliability.
 
 % Multi-città trip
 multi_trip([Start|Cities], Profile, Budget, Plan) :-

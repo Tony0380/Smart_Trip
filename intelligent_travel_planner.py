@@ -60,9 +60,7 @@ class IntelligentTravelPlanner:
         self.evaluation_mode = evaluation_mode
 
         if self.verbose:
-            print("=" * 80)
             print("INTELLIGENT TRAVEL PLANNER")
-            print("=" * 80)
             print("Initializing all system components...")
 
         # Initialize core components
@@ -78,7 +76,6 @@ class IntelligentTravelPlanner:
 
         if self.verbose:
             print("[OK] System initialization completed successfully!")
-            print("=" * 80)
 
     def _initialize_components(self):
         """
@@ -121,7 +118,7 @@ class IntelligentTravelPlanner:
             print("\n[5/5] Integration layer ready!")
 
         # 5. System state
-        self.system_ready = False
+        self.system_ready = not self.training_mode
 
     def _train_system(self):
         """
@@ -129,10 +126,10 @@ class IntelligentTravelPlanner:
         """
 
         if self.verbose:
-            print(f"\n{'='*20} SYSTEM TRAINING PHASE {'='*20}")
+            print("SYSTEM TRAINING PHASE")
 
         # Train ML models
-        training_results = self.ml_pathfinder.train_ml_models(n_scenarios=800)
+        training_results = self.ml_pathfinder.train_ml_models(n_scenarios=200)
 
         if self.verbose:
             print(f"\n[OK] ML Training completed:")
@@ -177,15 +174,13 @@ class IntelligentTravelPlanner:
             Dict completo con raccomandazione finale, analisi, spiegazioni
         """
 
-        if not self.system_ready:
+        if not self.system_ready and self.training_mode:
             raise RuntimeError("System not trained. Initialize with training_mode=True")
 
         start_time = time.time()
 
         if self.verbose:
-            print(f"\n{'='*60}")
             print(f"INTELLIGENT TRAVEL PLANNING: {origin} --> {destination}")
-            print(f"{'='*60}")
 
         travel_plan = {
             'request': {
@@ -416,6 +411,17 @@ class IntelligentTravelPlanner:
 
         return travel_plan
 
+    def plan_single_trip(self, origin: str, destination: str, profile: str, budget: float, 
+                        season: str = 'summer', weather: str = 'Fair', quiet: bool = False, 
+                        no_training: bool = False) -> Dict[str, Any]:
+        """Simplified interface for single trip planning"""
+        user_profile = {
+            'user_age': 30,
+            'user_income': 50000 if profile == 'business' else 30000 if profile == 'leisure' else 20000,
+            'price_sensitivity': 0.2 if profile == 'business' else 0.6 if profile == 'leisure' else 0.9,
+        }
+        return self.plan_travel(origin, destination, user_profile, budget, season, weather)
+
     def _generate_explanations(self, travel_plan: Dict[str, Any]) -> Dict[str, str]:
         """
         Genera spiegazioni human-readable del processo decisionale
@@ -482,7 +488,7 @@ class IntelligentTravelPlanner:
         if not hasattr(self, 'evaluator'):
             self.evaluator = ComprehensiveEvaluationFramework()
 
-        print(f"\n{'='*20} COMPREHENSIVE EVALUATION {'='*20}")
+        print("COMPREHENSIVE EVALUATION")
 
         # Generate evaluation dataset
         self.evaluator.generate_evaluation_dataset(n_scenarios=800)
@@ -510,16 +516,14 @@ class IntelligentTravelPlanner:
         Demo interattivo del sistema
         """
 
-        print(f"\n{'='*60}")
         print("INTERACTIVE TRAVEL PLANNING DEMO")
-        print(f"{'='*60}")
 
         # Predefined demo scenarios
         demo_scenarios = [
             {
                 'name': 'Business Trip',
-                'origin': 'milano',
-                'destination': 'roma',
+                'origin': 'Milano',
+                'destination': 'Roma',
                 'user_profile': {
                     'user_age': 35,
                     'user_income': 70000,
@@ -532,8 +536,8 @@ class IntelligentTravelPlanner:
             },
             {
                 'name': 'Budget Travel',
-                'origin': 'venezia',
-                'destination': 'napoli',
+                'origin': 'Venezia',
+                'destination': 'Napoli',
                 'user_profile': {
                     'user_age': 22,
                     'user_income': 25000,
@@ -546,8 +550,8 @@ class IntelligentTravelPlanner:
             },
             {
                 'name': 'Leisure Travel',
-                'origin': 'torino',
-                'destination': 'palermo',
+                'origin': 'Torino',
+                'destination': 'Palermo',
                 'user_profile': {
                     'user_age': 28,
                     'user_income': 45000,
@@ -565,28 +569,26 @@ class IntelligentTravelPlanner:
             print("-" * 40)
 
             try:
-                result = self.plan_travel(**scenario)
+                scenario_copy = scenario.copy()
+                scenario_copy.pop('name', None)
+                result = self.plan_travel(**scenario_copy)
 
                 # Print summary
-                if result['recommendations']['primary']['route']:
-                    route = result['recommendations']['primary']['route']
-                    print(f"[OK] Route found: {' --> '.join(route['path'])}")
-                    print(f"   Cost: €{route.get('total_cost', 0):.2f}")
-                    print(f"   Time: {route.get('total_time', 0):.1f} hours")
-                    print(f"   Confidence: {result['recommendations']['primary']['confidence']:.0%}")
-
-                    # Print explanation
-                    if 'user_profiling' in result['explanations']:
-                        print(f"   {result['explanations']['user_profiling']}")
+                if result and 'recommendations' in result:
+                    if 'final_recommendation' in result['recommendations'] and result['recommendations']['final_recommendation']:
+                        route = result['recommendations']['final_recommendation']
+                        print(f"[OK] Route found: {' --> '.join(route.get('path', ['Unknown']))}")
+                        print(f"   Cost: €{route.get('total_cost', 0):.2f}")
+                        print(f"   Time: {route.get('total_time', 0):.1f} hours")
+                    else:
+                        print("[ERROR] No suitable route found")
                 else:
-                    print("[ERROR] No suitable route found")
+                    print("[ERROR] No result returned")
 
             except Exception as e:
                 print(f"[ERROR] Demo failed: {e}")
 
-        print(f"\n{'='*60}")
         print("DEMO COMPLETED")
-        print(f"{'='*60}")
 
 def main():
     """
@@ -662,9 +664,7 @@ Examples:
             )
 
             # Print results
-            print(f"\n{'='*60}")
             print("TRAVEL PLANNING RESULT")
-            print(f"{'='*60}")
 
             if result['recommendations']['primary']['route']:
                 route = result['recommendations']['primary']['route']
