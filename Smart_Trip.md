@@ -87,7 +87,7 @@ Modelli di apprendimento supervisionato con Grid Search per predizione di variab
 **Argomento 3: Ragionamento Probabilistico** (Sezione "Ragionamento Probabilistico e Incertezza" del programma)
 Rete Bayesiana per modellazione dell'incertezza nelle decisioni di viaggio, gestendo dipendenze probabilistiche tra variabili ambientali e outcome di viaggio.
 
-**Argomento 4: Rappresentazione della Conoscenza** (Sezione "Rappresentazione della Conoscenza e Ragionamento Automatico" del programma)  
+**Argomento 4: Rappresentazione della Conoscenza** (Sezione "Rappresentazione della Conoscenza e Ragionamento Automatico" del programma)
 Knowledge Base Prolog avanzata con inferenza complessa multi-livello: pathfinding dinamico ricorsivo, calcolo affidabilità con fattori meteorologici e eventi, meta-ragionamento per spiegazioni, constraint satisfaction con propagazione, ottimizzazione multi-obiettivo e pianificazione temporale.
 
 ---
@@ -362,12 +362,12 @@ def find_ml_enhanced_route(self, origin, destination, **context):
 
 **Risultati Predizione Prezzi (Dataset 158 scenari):**
 
-| Modello                     | R² Score                | MAE (€)             | RMSE (€)             |
-| --------------------------- | ------------------------ | -------------------- | --------------------- |
-| Linear Regression           | 0.697                   | 12.85               | 16.2                 |
-| Ridge Regression            | 0.721                   | 12.20               | 15.8                 |
-| Random Forest               | 0.688                   | 12.43               | 16.7                 |
-| **Gradient Boosting** | **0.823**          | **10.24**      | **13.1**        |
+| Modello                     | R² Score       | MAE (€)        | RMSE (€)      |
+| --------------------------- | --------------- | --------------- | -------------- |
+| Linear Regression           | 0.697           | 12.85           | 16.2           |
+| Ridge Regression            | 0.721           | 12.20           | 15.8           |
+| Random Forest               | 0.688           | 12.43           | 16.7           |
+| **Gradient Boosting** | **0.823** | **10.24** | **13.1** |
 
 **Metriche per Classificazione:**
 
@@ -377,13 +377,14 @@ def find_ml_enhanced_route(self, origin, destination, **context):
 
 **Risultati Classificazione Profili (411 profili):**
 
-| Modello                 | Accuracy               | Precision              | Recall                 | F1-Score               |
-| ----------------------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- |
-| Logistic Regression     | 0.887                 | 0.89                  | 0.89                  | 0.89                  |
-| **Random Forest**       | **0.919**             | **0.92**              | **0.92**              | **0.92**              |
-| SVM                     | 0.901                 | 0.90                  | 0.90                  | 0.90                  |
+| Modello                 | Accuracy        | Precision      | Recall         | F1-Score       |
+| ----------------------- | --------------- | -------------- | -------------- | -------------- |
+| Logistic Regression     | 0.887           | 0.89           | 0.89           | 0.89           |
+| **Random Forest** | **0.919** | **0.92** | **0.92** | **0.92** |
+| SVM                     | 0.901           | 0.90           | 0.90           | 0.90           |
 
 **Time Estimator Performance:**
+
 - **R² Score**: 0.888 ± 0.115 (5-fold cross-validation)
 - **MAE**: 0.8 ore ± 0.2
 
@@ -527,8 +528,8 @@ La KB Prolog è organizzata gerarchicamente in livelli di astrazione crescente:
 
 1. **Livello dei Fatti Base** (350+ fatti): Città con coordinate GPS reali, connessioni multi-modali, trasporti con disponibilità oraria, eventi probabilistici, impatti meteorologici regionali
 2. **Livello di Inferenza Dinamica** (200+ regole): Pathfinding ricorsivo fino a 5 salti, calcolo affidabilità multi-fattoriale, reasoning temporale con scheduling
-3. **Livello Meta-Cognitivo** (50+ regole): Spiegazioni automatiche delle decisioni, constraint propagation avanzata, ottimizzazione multi-obiettivo con ranking dinamico
-4. **Livello Interface Avanzato** (30+ predicati): API complessa per interrogazioni con inferenza completa, meta-ragionamento e pianificazione temporale
+3. **Livello Meta-Cognitivo** (50+ regole): spiegazioni
+4. **Livello Interface Avanzato** (30+ predicati): interrogazioni e ragionamento
 
 La knowledge base implementa il **Closed World Assumption**, dove tutto ciò che non è esplicitamente derivabile è considerato falso, appropriato per il dominio strutturato dei trasporti.
 
